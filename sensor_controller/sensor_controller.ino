@@ -1,13 +1,18 @@
+/* Zach Grasso
+ * Started June 9, 2021
+ * 
+ * Working with a MKR1010 and Bosch BME280 hardware
+ * Measuring in Farenheit, Relative Humidity (RA), and wanting to change to atmospheres
+ */
 
 #include <BME280I2C.h>
 #include <Wire.h>
 
 #define SERIAL_BAUD 115200
 
-BME280I2C bme;    // Default : forced mode, standby time = 1000 ms
-// Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,
+BME280I2C bme;
 
-//////////////////////////////////////////////////////////////////
+
 void setup()
 {
   Serial.begin(SERIAL_BAUD);
@@ -27,22 +32,21 @@ void setup()
     case BME280::ChipModel_BME280:
       Serial.println("Found BME280 sensor! Success.");
       break;
-    case BME280::ChipModel_BMP280:
-      Serial.println("Found BMP280 sensor! No Humidity available.");
-      break;
     default:
       Serial.println("Found UNKNOWN sensor! Error!");
   }
 }
 
-//////////////////////////////////////////////////////////////////
+
 void loop()
 {
   printBME280Data(&Serial);
   delay(500);
 }
 
-//////////////////////////////////////////////////////////////////
+
+
+
 void printBME280Data
 (
   Stream* client
@@ -50,14 +54,14 @@ void printBME280Data
 {
   float temp(NAN), hum(NAN), pres(NAN);
 
-  BME280::TempUnit tempUnit(BME280::TempUnit_Celsius);
+  BME280::TempUnit tempUnit(BME280::TempUnit_Fahrenheit);
   BME280::PresUnit presUnit(BME280::PresUnit_Pa);
 
   bme.read(pres, temp, hum, tempUnit, presUnit);
 
   client->print("Temp: ");
   client->print(temp);
-  client->print("°" + String(tempUnit == BME280::TempUnit_Celsius ? 'C' : 'F'));
+  client->print("°F");
   client->print("\t\tHumidity: ");
   client->print(hum);
   client->print("% RH");
@@ -65,5 +69,5 @@ void printBME280Data
   client->print(pres);
   client->println("Pa");
 
-  delay(1000);
+  delay(20000);
 }
