@@ -12,9 +12,6 @@
 
 BME280I2C bme;
 
-const int AirValue = 520;
-const int WaterValue = 260;
-int intervals = (AirValue - WaterValue)/3;
 int soilMoistureValue = 0;
 
 
@@ -50,7 +47,7 @@ void loop()
   delay(500);
 }
 
-
+//SoilMoistureValue dry = 1023 and wet = 0
 void printSoilMoisture()
 { 
   soilMoistureValue = analogRead(A0);     //soil sensor on Analog0
