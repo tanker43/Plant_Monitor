@@ -8,9 +8,14 @@
 #include <BME280I2C.h>
 #include <Wire.h>
 
-#define SERIAL_BAUD 115200
+#define SERIAL_BAUD 9600
 
 BME280I2C bme;
+
+const int AirValue = 520;
+const int WaterValue = 260;
+int intervals = (AirValue - WaterValue)/3;
+int soilMoistureValue = 0;
 
 
 void setup()
@@ -41,16 +46,19 @@ void setup()
 void loop()
 {
   printBME280Data(&Serial);
+  printSoilMoisture();
   delay(500);
 }
 
 
+void printSoilMoisture()
+{ 
+  soilMoistureValue = analogRead(A0);     //soil sensor on Analog0
+  Serial.print("Moisture : ");
+  Serial.println(soilMoistureValue);
+}
 
-
-void printBME280Data
-(
-  Stream* client
-)
+void printBME280Data(Stream* client)
 {
   float temp(NAN), hum(NAN), pres(NAN);
 
