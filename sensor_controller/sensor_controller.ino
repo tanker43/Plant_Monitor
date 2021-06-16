@@ -44,7 +44,7 @@ void loop()
 {
   printBME280Data(&Serial);
   printSoilMoisture();
-  delay(500);
+  delay(20000);
 }
 
 //SoilMoistureValue dry = 1023 and wet = 0
@@ -74,5 +74,4 @@ void printBME280Data(Stream* client)
   client->print(pres);
   client->println("Pa");
 
-  delay(20000);
 }
