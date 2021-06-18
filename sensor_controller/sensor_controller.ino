@@ -4,15 +4,22 @@
  * Working with a MKR1010 and Bosch BME280 hardware
  * Measuring in Farenheit, Relative Humidity (RA), and wanting to change to atmospheres
  */
-
+#include "passwords.h"
 #include <BME280I2C.h>
 #include <Wire.h>
+#include <WiFiNINA.h>
+#include <ArduinoMqttClient.h>
+#include <ArduinoECCX08.h>
+#include <ArduinoBearSSL.h>
+#include <ArduinoCloudProviderExamples.h>
 
 #define SERIAL_BAUD 9600
 
 BME280I2C bme;
 
+void printSoilMoisture();
 int soilMoistureValue = 0;
+
 
 
 void setup()
@@ -37,11 +44,23 @@ void setup()
     default:
       Serial.println("Found UNKNOWN sensor! Error!");
   }
+
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.print("attempting to connect to: ");
+    Serial.println(ssid);
+    WiFi.begin(ssid, pass);
+    delay(10000);
+  }
+
+  Serial.println("WiFi Connected");
+
 }
 
 
 void loop()
 {
+
   printBME280Data(&Serial);
   printSoilMoisture();
   delay(20000);
