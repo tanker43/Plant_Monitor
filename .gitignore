@@ -2,3 +2,5 @@
 sensor_controller/passwords.h
 
 schedule
+
+sensor_controller/AWS_Connection/arduino_secrets.h
