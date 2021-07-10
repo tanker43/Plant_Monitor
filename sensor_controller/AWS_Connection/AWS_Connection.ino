@@ -5,27 +5,24 @@
   It uses a private key stored in the ATECC508A and a public
   certificate for SSL/TLS authetication.
 
-  It publishes a message every 5 seconds to arduino/outgoing
-  topic and subscribes to messages on the arduino/incoming
-  topic.
+
 
   The circuit:
-  - Arduino MKR WiFi 1010 or MKR1000
-
-  The following tutorial on Arduino Project Hub can be used
-  to setup your AWS account and the MKR board:
-
-  https://create.arduino.cc/projecthub/132016/securely-connecting-an-arduino-mkr-wifi-1010-to-aws-iot-core-a9f365
-
-  This example code is in the public domain.
+  - Arduino MKR WiFi 1010
 */
 
 #include <ArduinoBearSSL.h>
 #include <ArduinoECCX08.h>
 #include <ArduinoMqttClient.h>
-#include <WiFiNINA.h> // change to #include <WiFi101.h> for MKR1000
+#include <WiFiNINA.h>
+#include <BME280I2C.h>
+#include <Wire.h>
+#include <ArduinoJson.h>
 
 #include "arduino_secrets.h"
+#define SERIAL_BAUD 9600
+BME280I2C bme;
+
 
 /////// Enter your sensitive data in arduino_secrets.h
 const char ssid[]        = SECRET_SSID;
@@ -40,7 +37,16 @@ MqttClient    mqttClient(sslClient);
 unsigned long lastMillis = 0;
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(SERIAL_BAUD);
+  //starting I2C bus as master
+  Wire.begin();
+
+  while (!bme.begin())
+  {
+    Serial.println("Could not find BME280 sensor!");
+    delay(1000);  
+  }
+  
   while (!Serial);
 
   if (!ECCX08.begin()) {
@@ -85,7 +91,8 @@ void loop() {
   if (millis() - lastMillis > 10000) {
     lastMillis = millis();
 
-    publishMessage();
+    
+    sendAWSData();
   }
 }
 
@@ -129,14 +136,31 @@ void connectMQTT() {
   mqttClient.subscribe("arduino/incoming");
 }
 
-void publishMessage() {
-  Serial.println("Publishing message");
 
-  // send message, the Print interface can be used to set the message contents
+void sendAWSData()
+{
+  float temp(NAN), hum(NAN), pres(NAN);
+
+  BME280::TempUnit tempUnit(BME280::TempUnit_Fahrenheit);
+  BME280::PresUnit presUnit(BME280::PresUnit_inHg);
+
+  bme.read(pres, temp, hum, tempUnit, presUnit);
+
+  StaticJsonDocument<200> doc;
+
+  doc["time"] = WiFi.getTime();
+  doc["temp"] = temp;
+  doc["pres"] = pres;
+  doc["hum"] = hum;
+  doc["saturation"] = analogRead(A0);
+  
+  char jsonBuffer[512];
+  serializeJson(doc, jsonBuffer);
+  
   mqttClient.beginMessage("arduino/outgoing");
-  mqttClient.print("hello ");
-  mqttClient.print(millis());
-  mqttClient.endMessage();
+  mqttClient.print(jsonBuffer);
+  mqttClient.endMessage();  
+
 }
 
 void onMessageReceived(int messageSize) {
